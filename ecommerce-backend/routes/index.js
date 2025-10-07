@@ -12,6 +12,16 @@ const cartRoutes = require('./cartRoutes');
 const paymentRoutes = require('./paymentRoutes');
 const reviewRoutes = require('./reviewRoutes');
 
+// Debug: Log the type and value of each route module
+console.log('authRoutes:', typeof authRoutes, authRoutes);
+console.log('userRoutes:', typeof userRoutes, userRoutes);
+console.log('productRoutes:', typeof productRoutes, productRoutes);
+console.log('categoryRoutes:', typeof categoryRoutes, categoryRoutes);
+console.log('orderRoutes:', typeof orderRoutes, orderRoutes);
+console.log('cartRoutes:', typeof cartRoutes, cartRoutes);
+console.log('paymentRoutes:', typeof paymentRoutes, paymentRoutes);
+console.log('reviewRoutes:', typeof reviewRoutes, reviewRoutes);
+
 // Health check route
 router.get('/health', (req, res) => {
   res.status(200).json({

@@ -50,8 +50,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
 // Routes
 app.use('/api', routes);
 
-// 404 handler
-app.use('*', notFound);
 
 // Error handler
 app.use(errorHandler);

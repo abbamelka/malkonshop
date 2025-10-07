@@ -7,6 +7,15 @@ const { validateRequest } = require('../middleware/validation');
 
 const userController = new UserController();
 
+// Debug controller methods
+console.log('getAllUsers:', typeof userController.getAllUsers, userController.getAllUsers);
+console.log('getUserById:', typeof userController.getUserById, userController.getUserById);
+console.log('createUser:', typeof userController.createUser, userController.createUser);
+console.log('updateUser:', typeof userController.updateUser, userController.updateUser);
+console.log('deactivateUser:', typeof userController.deactivateUser, userController.deactivateUser);
+console.log('activateUser:', typeof userController.activateUser, userController.activateUser);
+console.log('searchUsers:', typeof userController.searchUsers, userController.searchUsers);
+
 /**
  * @swagger
  * tags:

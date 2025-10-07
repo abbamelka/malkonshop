@@ -1,190 +1,221 @@
-// controllers/reviewController.js
-const BaseController = require('./baseController');
-const ReviewService = require('../services/reviewService');
+const { Review, Product, User, Order } = require('../models');
+const { AppError } = require('../utils/errors');
+const { Op } = require('sequelize');
 
-class ReviewController extends BaseController {
-  constructor() {
-    super(new ReviewService());
-  }
+const reviewController = {
+  // Get all reviews for a product
+  getProductReviews: async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+
+      const reviews = await Review.findAll({
+        where: { 
+          productId,
+          status: 'approved' // Only show approved reviews
+        },
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'firstName', 'lastName']
+          },
+          {
+            model: Product,
+            attributes: ['id', 'name']
+          }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+
+      res.status(200).json({
+        success: true,
+        data: reviews,
+        count: reviews.length
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 
   // Create a new review
-  createReview = async (req, res) => {
+  createReview: async (req, res, next) => {
     try {
-      const { id: userId } = req.user;
-      const result = await this.service.createReview(userId, req.body);
-      this.success(res, 201, 'Review created successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      const { productId, orderId, rating, title, comment } = req.body;
+      const userId = req.user.id;
 
-  // Get reviews for a product
-  getProductReviews = async (req, res) => {
-    try {
-      const { productId } = req.params;
-      const result = await this.service.getProductReviews(productId, req.query);
-      this.success(res, 200, 'Product reviews fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      // Check if user has purchased the product
+      const order = await Order.findOne({
+        where: {
+          id: orderId,
+          userId,
+          status: 'delivered'
+        },
+        include: [
+          {
+            model: Product,
+            through: { where: { productId } },
+            required: true
+          }
+        ]
+      });
 
-  // Get user's reviews
-  getUserReviews = async (req, res) => {
-    try {
-      const { id: userId } = req.user;
-      const result = await this.service.getUserReviews(userId, req.query);
-      this.success(res, 200, 'User reviews fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      if (!order) {
+        throw new AppError('You can only review products you have purchased and received', 403);
+      }
 
-  // Get specific user's reviews (admin)
-  getUserReviewsById = async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const result = await this.service.getUserReviews(userId, req.query);
-      this.success(res, 200, 'User reviews fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      // Check if user already reviewed this product
+      const existingReview = await Review.findOne({
+        where: {
+          productId,
+          userId,
+          orderId
+        }
+      });
 
-  // Update review
-  updateReview = async (req, res) => {
-    try {
-      const { id: userId } = req.user;
-      const { id: reviewId } = req.params;
-      const result = await this.service.updateReview(reviewId, userId, req.body);
-      this.success(res, 200, 'Review updated successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      if (existingReview) {
+        throw new AppError('You have already reviewed this product for this order', 400);
+      }
 
-  // Delete review
-  deleteReview = async (req, res) => {
-    try {
-      const { id: userId } = req.user;
-      const { id: reviewId } = req.params;
-      const result = await this.service.deleteReview(reviewId, userId);
-      this.success(res, 200, 'Review deleted successfully', result);
+      const review = await Review.create({
+        productId,
+        userId,
+        orderId,
+        rating,
+        title,
+        comment,
+        status: 'pending' // Admin approval required
+      });
+
+      // Populate with user data for response
+      const reviewWithUser = await Review.findByPk(review.id, {
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'firstName', 'lastName']
+          }
+        ]
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Review submitted successfully and awaiting approval',
+        data: reviewWithUser
+      });
     } catch (error) {
-      this.handleError(res, error);
+      next(error);
     }
-  };
+  },
+
+  // Update a review
+  updateReview: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { rating, title, comment } = req.body;
+      const userId = req.user.id;
+
+      const review = await Review.findOne({
+        where: {
+          id,
+          userId // Users can only update their own reviews
+        }
+      });
+
+      if (!review) {
+        throw new AppError('Review not found or you are not authorized to update it', 404);
+      }
+
+      // Only allow updating if review is not approved yet
+      if (review.status === 'approved') {
+        throw new AppError('Cannot update an approved review', 400);
+      }
+
+      await review.update({
+        rating: rating || review.rating,
+        title: title || review.title,
+        comment: comment || review.comment,
+        status: 'pending' // Reset to pending after update
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Review updated successfully',
+        data: review
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Delete a review
+  deleteReview: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      const review = await Review.findOne({
+        where: {
+          id,
+          userId // Users can only delete their own reviews
+        }
+      });
+
+      if (!review) {
+        throw new AppError('Review not found or you are not authorized to delete it', 404);
+      }
+
+      await review.destroy();
+
+      res.status(200).json({
+        success: true,
+        message: 'Review deleted successfully'
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 
   // Admin: Approve review
-  approveReview = async (req, res) => {
+  approveReview: async (req, res, next) => {
     try {
-      const { id: reviewId } = req.params;
-      const result = await this.service.approveReview(reviewId);
-      this.success(res, 200, 'Review approved successfully', result);
+      const { id } = req.params;
+
+      const review = await Review.findByPk(id);
+      if (!review) {
+        throw new AppError('Review not found', 404);
+      }
+
+      await review.update({ status: 'approved' });
+
+      res.status(200).json({
+        success: true,
+        message: 'Review approved successfully',
+        data: review
+      });
     } catch (error) {
-      this.handleError(res, error);
+      next(error);
     }
-  };
+  },
 
   // Admin: Reject review
-  rejectReview = async (req, res) => {
+  rejectReview: async (req, res, next) => {
     try {
-      const { id: reviewId } = req.params;
-      const result = await this.service.rejectReview(reviewId);
-      this.success(res, 200, 'Review rejected successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      const { id } = req.params;
 
-  // Admin: Get pending reviews
-  getPendingReviews = async (req, res) => {
-    try {
-      const result = await this.service.getPendingReviews(req.query);
-      this.success(res, 200, 'Pending reviews fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      const review = await Review.findByPk(id);
+      if (!review) {
+        throw new AppError('Review not found', 404);
+      }
 
-  // Mark review as helpful
-  markHelpful = async (req, res) => {
-    try {
-      const { id: userId } = req.user;
-      const { id: reviewId } = req.params;
-      const result = await this.service.markHelpful(reviewId, userId);
-      this.success(res, 200, 'Review marked as helpful', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
+      await review.update({ status: 'rejected' });
 
-  // Mark review as not helpful
-  markNotHelpful = async (req, res) => {
-    try {
-      const { id: userId } = req.user;
-      const { id: reviewId } = req.params;
-      const result = await this.service.markNotHelpful(reviewId, userId);
-      this.success(res, 200, 'Review marked as not helpful', result);
+      res.status(200).json({
+        success: true,
+        message: 'Review rejected successfully',
+        data: review
+      });
     } catch (error) {
-      this.handleError(res, error);
+      next(error);
     }
-  };
+  }
+};
 
-  // Get recent reviews
-  getRecentReviews = async (req, res) => {
-    try {
-      const { days = 7 } = req.query;
-      const result = await this.service.getRecentReviews(parseInt(days, 10), req.query);
-      this.success(res, 200, 'Recent reviews fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
-
-  // Search reviews
-  searchReviews = async (req, res) => {
-    try {
-      const { q } = req.query;
-      const result = await this.service.searchReviews(q, req.query);
-      this.success(res, 200, 'Reviews search completed', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
-
-  // Get review statistics for a product
-  getReviewStats = async (req, res) => {
-    try {
-      const { productId } = req.params;
-      const result = await this.service.getReviewStats(productId);
-      this.success(res, 200, 'Review statistics fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
-
-  // Get single review by ID
-  getReview = async (req, res) => {
-    try {
-      const { id: reviewId } = req.params;
-      const result = await this.service.getById(reviewId);
-      this.success(res, 200, 'Review fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
-
-  // Get all reviews (admin)
-  getAllReviews = async (req, res) => {
-    try {
-      const result = await this.service.getAll(req.query);
-      this.success(res, 200, 'All reviews fetched successfully', result);
-    } catch (error) {
-      this.handleError(res, error);
-    }
-  };
-}
-
-// Export an instance (not the class)
-module.exports = new ReviewController();
+module.exports = reviewController;

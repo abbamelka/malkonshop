@@ -152,9 +152,7 @@ router.get(
   categoryController.getCategoryWithProducts
 );
 
-// -----------------------
-// ✅ Admin-only Routes
-// -----------------------
+// Admin-only Routes
 router.use(authenticate, authorize('admin'));
 
 /**

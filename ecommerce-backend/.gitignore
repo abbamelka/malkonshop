@@ -1,0 +1,8 @@
+#node modules
+node_modules/
+
+# Environment variables
+.env
+
+#env creation tool
+create-structure.sh.sh

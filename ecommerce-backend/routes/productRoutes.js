@@ -181,6 +181,7 @@ router.post('/',
     body('quantity').optional().isInt({ min: 0 }).withMessage('Quantity must be a positive integer')
   ],
   validateRequest,
+  uploadProductImages,
   productController.createProduct
 );
 

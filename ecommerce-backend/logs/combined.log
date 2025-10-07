@@ -19,3 +19,19 @@
 {"level":"info","message":"✅ Default admin user created","service":"ecommerce-api","timestamp":"2025-10-07 01:56:24"}
 {"level":"info","message":"✅ Default categories created","service":"ecommerce-api","timestamp":"2025-10-07 01:56:24"}
 {"level":"info","message":"✅ Sample products created","service":"ecommerce-api","timestamp":"2025-10-07 01:56:24"}
+{"level":"info","message":"✅ Database connection established successfully.","service":"ecommerce-api","timestamp":"2025-10-07 11:30:14"}
+{"level":"info","message":"✅ Database synchronized successfully.","service":"ecommerce-api","timestamp":"2025-10-07 11:30:15"}
+{"level":"info","message":"🌱 Starting database seeding...","service":"ecommerce-api","timestamp":"2025-10-07 11:30:15"}
+{"level":"info","message":"✅ Default categories created","service":"ecommerce-api","timestamp":"2025-10-07 11:30:15"}
+{"level":"info","message":"✅ Sample products created","service":"ecommerce-api","timestamp":"2025-10-07 11:30:15"}
+{"level":"info","message":"🎉 Database seeding completed successfully!","service":"ecommerce-api","timestamp":"2025-10-07 11:30:15"}
+{"level":"info","message":"\n🚀 ===============================================\n   E-Commerce Server Started Successfully!\n   ===============================================\n   🌐 Environment: development\n   📍 Port: 5000\n   🗄️  Database: ecommerce_db\n   📚 API Docs: http://localhost:5000/api-docs\n   🔗 API Base: http://localhost:5000/api\n   👤 Admin: admin@yourecommerce.com\n   ===============================================\n      ","service":"ecommerce-api","timestamp":"2025-10-07 11:30:15"}
+{"level":"info","message":"✅ Database connection established successfully.","service":"ecommerce-api","timestamp":"2025-10-07 11:33:26"}
+{"level":"info","message":"✅ Database synchronized successfully.","service":"ecommerce-api","timestamp":"2025-10-07 11:33:26"}
+{"level":"info","message":"🌱 Starting database seeding...","service":"ecommerce-api","timestamp":"2025-10-07 11:33:26"}
+{"level":"info","message":"✅ Default categories created","service":"ecommerce-api","timestamp":"2025-10-07 11:33:27"}
+{"level":"info","message":"✅ Sample products created","service":"ecommerce-api","timestamp":"2025-10-07 11:33:27"}
+{"level":"info","message":"🎉 Database seeding completed successfully!","service":"ecommerce-api","timestamp":"2025-10-07 11:33:27"}
+{"level":"info","message":"\n🚀 ===============================================\n   E-Commerce Server Started Successfully!\n   ===============================================\n   🌐 Environment: development\n   📍 Port: 5000\n   🗄️  Database: ecommerce_db\n   📚 API Docs: http://localhost:5000/api-docs\n   🔗 API Base: http://localhost:5000/api\n   👤 Admin: admin@yourecommerce.com\n   ===============================================\n      ","service":"ecommerce-api","timestamp":"2025-10-07 11:33:27"}
+{"level":"error","message":"Error Stack:","service":"ecommerce-api","timestamp":"2025-10-07 11:34:14"}
+{"ip":"::1","level":"error","message":"Error Details: errorResponse is not a function","method":"POST","service":"ecommerce-api","timestamp":"2025-10-07 11:34:14","url":"/api/auth/login","user":"Anonymous"}
